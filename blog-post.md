@@ -19,7 +19,7 @@
 
 아래 버튼을 눌러 앱 파일(APK)을 내려받으세요.
 
-**[⬇ 기도여정 앱 다운로드 (v1.0.0 · 45MB)](https://github.com/joseph-84/prayerjourney/releases/download/v1.0.0/gidoyeojeong-v1.0.0.apk)**
+**[⬇ 기도여정 앱 다운로드 (v1.0.1 · 45MB)](https://github.com/joseph-84/prayerjourney/releases/download/v1.0.1/gidoyeojeong-v1.0.1.apk)**
 
 > 💡 파일 크기가 약 45MB입니다. 와이파이(Wi-Fi)에 연결된 상태에서 받으시길 권장합니다.
 
@@ -34,7 +34,7 @@
 #### 삼성 갤럭시 기준 (안드로이드 8 이상)
 
 1. 다운로드가 끝나면 화면 위쪽에서 아래로 손가락을 내려 **알림창**을 엽니다
-2. `gidoyeojeong-v1.0.0.apk 다운로드 완료` 알림을 누릅니다
+2. `gidoyeojeong-v1.0.1.apk 다운로드 완료` 알림을 누릅니다
 3. **"이 앱을 설치하시겠습니까?"** 화면이 나타납니다
 4. **"설정"** 버튼을 누릅니다 (또는 '출처를 알 수 없는 앱 설치' 항목으로 이동)
 5. **"이 출처 허용"** 스위치를 오른쪽으로 밀어 초록색으로 만듭니다
@@ -288,5 +288,5 @@ A. 완료된 항목의 초록색 ✓ 버튼을 다시 한 번 누르시면 취�
 ---
 
 *기도여정 앱은 Android 8.0 이상 스마트폰에서 사용할 수 있습니다.*  
-*현재 버전: v1.0.0 · 파일 크기: 45MB*  
+*현재 버전: v1.0.1 · 파일 크기: 45MB*  
 *[최신 버전 다운로드 페이지](https://github.com/joseph-84/prayerjourney/releases/latest)*
