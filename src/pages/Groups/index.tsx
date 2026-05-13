@@ -3,7 +3,9 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   Modal, TextInput, FlatList, Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenWrapper from '../../components/ScreenWrapper';
+import { BiblePrayerContent } from '../../components/BiblePrayerContent';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppContext } from '../../hooks/useAppData';
 import { StoredPrayer, StoredGroup } from '../../types';
@@ -14,8 +16,19 @@ const GROUP_COLORS = ['#4A9B6F', '#E8963A', '#7B68EE', '#E86B5E', '#3A9BE8', '#C
 const CAT_COLORS: Record<string, string> = {
   '주요기도': '#4A9B6F', '묵주기도': '#E86B5E', '고해성사': '#A0522D',
   '성체성사': '#3A9BE8', '호칭기도': '#7B68EE', '여러가지기도': '#E8963A', '레지오마리애': '#9B4A9B',
+  '매일성경': '#2D5016',
 };
 function catColor(cat: string) { return CAT_COLORS[cat] ?? '#8A8A8E'; }
+
+// 독서/복음은 prayers 배열에 없는 가상 항목
+const BIBLE_PICKER_ITEMS = [
+  { id: 'bible-reading', title: '오늘의 독서', category: '매일성경' },
+  { id: 'bible-gospel',  title: '오늘의 복음',  category: '매일성경' },
+];
+const BIBLE_VIRTUAL_PRAYERS: Record<string, StoredPrayer> = {
+  'bible-reading': { id: 'bible-reading', title: '오늘의 독서', category: '매일성경', source: 'bible', content: '', isFavorite: false, isDeleted: false, createdAt: '', updatedAt: '' },
+  'bible-gospel':  { id: 'bible-gospel',  title: '오늘의 복음',  category: '매일성경', source: 'bible', content: '', isFavorite: false, isDeleted: false, createdAt: '', updatedAt: '' },
+};
 
 // ── 기도 플레이어 ─────────────────────────────────────────────────
 const PrayerPlayer: React.FC<{
@@ -57,11 +70,14 @@ const PrayerPlayer: React.FC<{
 
       <ScrollView style={pl.body} contentContainerStyle={pl.bodyContent}>
         <Text style={pl.prayerTitle}>{current?.title}</Text>
-        <Text style={pl.prayerContent}>
-          {current?.content
-            ? current.content.replace(/\\n/g, '\n')
-            : '기도문 내용이 없습니다.'}
-        </Text>
+        {current?.source === 'bible'
+          ? <BiblePrayerContent prayerId={current.id} />
+          : <Text style={pl.prayerContent}>
+              {current?.content
+                ? current.content.replace(/\\n/g, '\n')
+                : '기도문 내용이 없습니다.'}
+            </Text>
+        }
       </ScrollView>
 
       <View style={pl.footer}>
@@ -95,6 +111,7 @@ const PrayerPlayer: React.FC<{
 // ── 메인 ─────────────────────────────────────────────────────────
 export default function GroupsScreen() {
   const { prayers, groups, addGroup, updateGroup, deleteGroup } = useAppContext();
+  const { bottom: bottomInset } = useSafeAreaInsets();
 
   const [expandedId,   setExpandedId]   = useState<string | null>(null);
   const [showForm,     setShowForm]     = useState(false);
@@ -106,16 +123,20 @@ export default function GroupsScreen() {
   const [search,       setSearch]       = useState('');
   const [playingGroup, setPlayingGroup] = useState<{ name: string; prayers: StoredPrayer[] } | null>(null);
 
-  const getPrayer = (id: string) => prayers.find(p => p.id === id);
+  const getPrayer    = (id: string) => prayers.find(p => p.id === id);
+  const getAnyPrayer = (id: string): StoredPrayer | undefined =>
+    BIBLE_VIRTUAL_PRAYERS[id] ?? prayers.find(p => p.id === id);
 
   const openAdd = () => {
     setFormName(''); setFormDesc(''); setFormColor(GROUP_COLORS[0]); setFormPrayers([]);
+    setSearch('');   // 검색어 초기화 → bible 항목 항상 표시
     setEditId(null); setShowForm(true);
   };
   const openEdit = (id: string) => {
     const g = groups.find(x => x.id === id);
     if (!g) return;
     setFormName(g.name); setFormDesc(g.description); setFormColor(g.color); setFormPrayers([...g.prayerIds]);
+    setSearch('');   // 검색어 초기화
     setEditId(id); setShowForm(true); setExpandedId(null);
   };
 
@@ -138,7 +159,7 @@ export default function GroupsScreen() {
   };
 
   const startPrayer = (g: StoredGroup) => {
-    const plist = g.prayerIds.map(id => getPrayer(id)).filter(Boolean) as StoredPrayer[];
+    const plist = g.prayerIds.map(id => getAnyPrayer(id)).filter(Boolean) as StoredPrayer[];
     setPlayingGroup({ name: g.name, prayers: plist });
     setExpandedId(null);
   };
@@ -149,10 +170,15 @@ export default function GroupsScreen() {
   const moveUp   = (idx: number) => setFormPrayers(prev => { const a = [...prev]; if (idx === 0) return a; [a[idx-1], a[idx]] = [a[idx], a[idx-1]]; return a; });
   const moveDown = (idx: number) => setFormPrayers(prev => { const a = [...prev]; if (idx === a.length - 1) return a; [a[idx], a[idx+1]] = [a[idx+1], a[idx]]; return a; });
 
-  const filteredPrayers = useMemo(() =>
-    prayers.filter(p => p.source !== 'bible' && (p.title.includes(search) || p.category.includes(search))),
-    [prayers, search]
-  );
+  const filteredPrayers = useMemo(() => {
+    const bibleItems = BIBLE_PICKER_ITEMS.filter(b =>
+      !search || b.title.includes(search) || b.category.includes(search) || '성경'.includes(search)
+    );
+    const prayerItems = prayers.filter(p =>
+      p.source !== 'bible' && (p.title.includes(search) || p.category.includes(search))
+    );
+    return [...bibleItems, ...prayerItems] as any[];
+  }, [prayers, search]);
 
   // 기도 플레이어 (전체 화면)
   if (playingGroup) {
@@ -206,7 +232,7 @@ export default function GroupsScreen() {
                 {isExp && (
                   <View style={styles.cardBody}>
                     {g.prayerIds.map((pid, idx) => {
-                      const p = getPrayer(pid);
+                      const p = getAnyPrayer(pid);
                       if (!p) return null;
                       return (
                         <View key={pid} style={styles.prayerRow}>
@@ -274,7 +300,7 @@ export default function GroupsScreen() {
       {/* ── 그룹 추가/수정 모달 ── */}
       <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
         <TouchableOpacity style={mod.bg} activeOpacity={1} onPress={() => setShowForm(false)}>
-          <TouchableOpacity style={[mod.sheet, { maxHeight: '90%' }]} activeOpacity={1}>
+          <TouchableOpacity style={[mod.sheet, { maxHeight: '90%', paddingBottom: Math.max(32, bottomInset + 16) }]} activeOpacity={1}>
             <View style={mod.handle} />
             <View style={mod.header}>
               <Text style={mod.title}>{editId ? '그룹 수정' : '새 그룹'}</Text>
@@ -368,7 +394,7 @@ export default function GroupsScreen() {
                 <View style={frm.preview}>
                   <Text style={frm.previewLabel}>순서 미리보기</Text>
                   {formPrayers.map((pid, idx) => {
-                    const p = getPrayer(pid);
+                    const p = getAnyPrayer(pid);
                     if (!p) return null;
                     return (
                       <View key={pid} style={frm.previewRow}>
@@ -494,11 +520,11 @@ const pl = StyleSheet.create({
 
 const mod = StyleSheet.create({
   bg:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheet:  { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 32 },
+  sheet:  { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 32, flex: 1 },
   handle: { width: 36, height: 4, backgroundColor: '#ddd', borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 4 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingBottom: 8 },
   title:  { fontSize: 17, fontWeight: '600', color: '#1a1a1a' },
-  body:   { paddingHorizontal: 20 },
+  body:   { flex: 1, paddingHorizontal: 20 },  // flex:1 → ScrollView가 남은 공간 채워 스크롤 가능
   footer: { flexDirection: 'row', gap: 10, padding: 16 },
   cancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#f0f0f0', alignItems: 'center' },
   cancelText: { fontSize: 14, color: '#666', fontWeight: '500' },

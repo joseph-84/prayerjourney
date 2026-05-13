@@ -121,6 +121,7 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            // 디버그: 모든 아키텍처 포함 (에뮬레이터 x86_64 포함)
         }
         release {
             signingConfig signingConfigs.release
@@ -130,6 +131,10 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()
+            // 릴리즈: arm 계열만 포함하여 APK 용량 최소화 (실제 기기 배포용)
+            ndk {
+                abiFilters "armeabi-v7a", "arm64-v8a"
+            }
         }
     }
     packagingOptions {

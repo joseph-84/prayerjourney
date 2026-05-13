@@ -3,11 +3,13 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Pressable,
   Modal, TextInput, FlatList, Alert, useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import TimePicker from '../../components/TimePicker';
+import { BiblePrayerContent } from '../../components/BiblePrayerContent';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppContext, todayKey } from '../../hooks/useAppData';
-import { useDailyBible, buildBibleUrl } from '../../hooks/useDailyBible';
+import { buildBibleUrl } from '../../hooks/useDailyBible';
 import { StoredPrayer, StoredGroup, TodayItem } from '../../types';
 import { rescheduleFromStorage } from '../../utils/notifications';
 
@@ -39,64 +41,14 @@ function formatTime12(time: string) {
   return `${period} ${h12}:${String(mm).padStart(2, '0')}`;
 }
 
-// ── 매일성경 콘텐츠 ───────────────────────────────────────────────
-const BiblePrayerContent: React.FC<{ prayerId: string }> = ({ prayerId }) => {
-  const { data, loading, error, retry } = useDailyBible();
-
-  if (loading) {
-    return (
-      <View style={ms.center}>
-        <Text style={ms.hint}>불러오는 중…</Text>
-      </View>
-    );
-  }
-  if (error || !data) {
-    return (
-      <View style={ms.center}>
-        <Text style={ms.hint}>불러오지 못했습니다</Text>
-        <TouchableOpacity style={ms.retryBtn} onPress={retry}>
-          <Text style={ms.retryText}>다시 시도</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const isGospel = prayerId === 'bible-gospel';
-  const section = isGospel
-    ? data.gospel
-    : data.readings.length > 0
-      ? {
-          book: data.readings[0].book,
-          content: data.readings.map((r, i) =>
-            data.readings.length > 1 ? `【${r.title}】\n${r.content}` : r.content
-          ).join('\n\n'),
-        }
-      : null;
-
-  if (!section?.content) {
-    return (
-      <View style={ms.center}>
-        <Text style={ms.hint}>내용을 파싱하지 못했습니다</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View>
-      {section.book ? <Text style={ms.book}>{section.book}</Text> : null}
-      <Text style={ms.content}>{section.content}</Text>
-    </View>
-  );
-};
-
 // ── 기도문 상세 모달 ──────────────────────────────────────────────
 const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ prayer, onClose }) => {
-  const { height: screenHeight } = useWindowDimensions();
+  const { bottom } = useSafeAreaInsets();
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
       <View style={mod.bg}>
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
-        <View style={mod.sheet}>
+        <View style={[mod.sheet, { paddingBottom: Math.max(32, bottom + 16) }]}>
           <View style={mod.handle} />
           <View style={mod.header}>
             <View style={{ flex: 1 }}>
@@ -130,12 +82,12 @@ const GroupPrayerListModal: React.FC<{
   onSelectPrayer: (p: StoredPrayer) => void;
   onClose: () => void;
 }> = ({ groupName, prayers, onSelectPrayer, onClose }) => {
-  const { height: screenHeight } = useWindowDimensions();
+  const { bottom } = useSafeAreaInsets();
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
       <View style={mod.bg}>
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
-        <View style={mod.sheet}>
+        <View style={[mod.sheet, { paddingBottom: Math.max(32, bottom + 16) }]}>
           <View style={mod.handle} />
           <View style={mod.header}>
             <Text style={[mod.title, { flex: 1 }]}>{groupName}</Text>
@@ -166,6 +118,7 @@ const GroupPrayerListModal: React.FC<{
 // ── 홈 메인 ───────────────────────────────────────────────────────
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
+  const { bottom: bottomInset } = useSafeAreaInsets();
   // 달력 셀 크기: margin 16*2 + padding 16*2 = 64px, 7열
   const cellSize = Math.floor((screenWidth - 64) / 7);
 
@@ -478,7 +431,7 @@ export default function HomeScreen() {
       {/* ── 편집 모달 ── */}
       <Modal visible={showEditor} transparent animationType="slide" onRequestClose={() => setShowEditor(false)}>
         <TouchableOpacity style={mod.bg} activeOpacity={1} onPress={() => setShowEditor(false)}>
-          <TouchableOpacity style={[mod.sheet, { maxHeight: '85%' }]} activeOpacity={1}>
+          <TouchableOpacity style={[mod.sheet, { maxHeight: '85%', paddingBottom: Math.max(32, bottomInset + 16) }]} activeOpacity={1}>
             <View style={mod.handle} />
             <View style={mod.header}>
               <Text style={[mod.title, { flex: 1 }]}>기도 목록 편집</Text>
@@ -564,7 +517,7 @@ export default function HomeScreen() {
       {/* ── 픽커 모달 ── */}
       <Modal visible={showPicker} transparent animationType="slide" onRequestClose={() => setShowPicker(false)}>
         <TouchableOpacity style={mod.bg} activeOpacity={1} onPress={() => setShowPicker(false)}>
-          <TouchableOpacity style={[mod.sheet, { maxHeight: '80%' }]} activeOpacity={1}>
+          <TouchableOpacity style={[mod.sheet, { maxHeight: '80%', paddingBottom: Math.max(32, bottomInset + 16) }]} activeOpacity={1}>
             <View style={mod.handle} />
             <View style={mod.header}>
               <Text style={[mod.title, { flex: 1 }]}>추가할 항목 선택</Text>
@@ -779,16 +732,6 @@ const mod = StyleSheet.create({
   saveBtnText: { fontSize: 14, color: '#fff', fontWeight: '600' },
   footerBtn: { marginHorizontal: 20, paddingVertical: 14, borderRadius: 12, backgroundColor: '#f0f0f0', alignItems: 'center' },
   footerBtnText: { fontSize: 14, color: '#666', fontWeight: '500' },
-});
-
-// 매일성경 스타일
-const ms = StyleSheet.create({
-  center:    { alignItems: 'center', paddingVertical: 30 },
-  hint:      { fontSize: 14, color: '#999', marginBottom: 12 },
-  retryBtn:  { backgroundColor: GREEN, borderRadius: 20, paddingHorizontal: 20, paddingVertical: 8 },
-  retryText: { color: '#fff', fontSize: 13 },
-  book:      { fontSize: 13, color: '#888', marginBottom: 10 },
-  content:   { fontSize: 15, color: '#333', lineHeight: 24 },
 });
 
 // 그룹 기도 모달 스타일
