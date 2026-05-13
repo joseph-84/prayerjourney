@@ -1,9 +1,10 @@
 import { getPrayers, savePrayers, mmkv } from './storage';
 import { StoredPrayer } from '../types';
+import { N8N_BASE_URL } from '../config';
 
 // ── 서버 주소 ──────────────────────────────────────────────────────
-const VERSION_URL = 'https://n8n.joseph84.freeddns.org/webhook/prayers/version';
-const DATA_URL    = 'https://n8n.joseph84.freeddns.org/webhook/prayers/data';
+const VERSION_URL = `${N8N_BASE_URL}/webhook/prayers/version`;
+const DATA_URL    = `${N8N_BASE_URL}/webhook/prayers/data`;
 
 // ── 저장 키 ────────────────────────────────────────────────────────
 const SYNC_VERSION_KEY = 'mgido_prayer_version';

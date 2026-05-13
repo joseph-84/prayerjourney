@@ -17,9 +17,10 @@ import {
   scheduleAlarms,
   cancelAllAlarms,
 } from '../../utils/notifications';
+import { N8N_BASE_URL } from '../../config';
 
 const GREEN = '#2D5016';
-const BACKUP_SERVER = 'https://n8n.joseph84.freeddns.org';
+const BACKUP_SERVER = N8N_BASE_URL;
 
 function showToastMsg(setter: (msg: string) => void, msg: string) {
   setter(msg);
