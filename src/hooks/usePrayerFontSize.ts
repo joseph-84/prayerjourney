@@ -1,92 +1,75 @@
 /**
  * usePrayerFontSize
  * 두 손가락 핀치 제스처로 기도문 글씨 크기를 조절하는 커스텀 훅
+ * - Gesture.Simultaneous(Native, Pinch)로 ScrollView와 동시 동작
  * - MMKV로 설정값 영구 저장
- * - 핀치 아웃(벌리기) → 글씨 커짐 / 핀치 인(모으기) → 글씨 작아짐
  */
-import { useRef, useState, useCallback } from 'react';
-import { PanResponder, GestureResponderEvent } from 'react-native';
+import { useState, useRef, useMemo, useCallback } from 'react';
+import { Gesture } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import { mmkv } from '../utils/storage';
 
 const STORAGE_KEY = 'prayer_font_size';
 const DEFAULT_SIZE = 15;
 const MIN_SIZE = 12;
 const MAX_SIZE = 28;
-// 이 픽셀 이상 변해야 한 단계 조절
-const STEP_THRESHOLD = 8;
-
-function getTwoFingerDistance(evt: GestureResponderEvent): number | null {
-  const { touches } = evt.nativeEvent;
-  if (touches.length < 2) return null;
-  const dx = touches[0].pageX - touches[1].pageX;
-  const dy = touches[0].pageY - touches[1].pageY;
-  return Math.sqrt(dx * dx + dy * dy);
-}
 
 export function usePrayerFontSize() {
-  // 저장된 값 읽기 (없으면 DEFAULT_SIZE)
   const [fontSize, setFontSizeState] = useState<number>(() => {
     const saved = mmkv.getNumber(STORAGE_KEY);
-    return saved != null ? saved : DEFAULT_SIZE;
+    return saved ?? DEFAULT_SIZE;
   });
 
-  const fontSizeRef = useRef(fontSize);
-  const lastDistRef = useRef<number | null>(null);
-  const accDeltaRef = useRef<number>(0);
+  const currentSizeRef = useRef(fontSize);
+  currentSizeRef.current = fontSize;
 
-  const setFontSize = useCallback((size: number) => {
-    const clamped = Math.max(MIN_SIZE, Math.min(MAX_SIZE, size));
-    fontSizeRef.current = clamped;
-    mmkv.set(STORAGE_KEY, clamped);
-    setFontSizeState(clamped);
+  const startSizeRef = useRef(fontSize);
+
+  const handlePinchBegin = useCallback(() => {
+    startSizeRef.current = currentSizeRef.current;
   }, []);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      // 두 손가락일 때만 제스처 처리
-      onStartShouldSetPanResponder: (e) => e.nativeEvent.touches.length === 2,
-      onMoveShouldSetPanResponder: (e) => e.nativeEvent.touches.length === 2,
-      onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponderCapture: () => false,
+  const handlePinchUpdate = useCallback((scale: number) => {
+    const newSize = Math.max(
+      MIN_SIZE,
+      Math.min(MAX_SIZE, Math.round(startSizeRef.current * scale)),
+    );
+    if (newSize !== currentSizeRef.current) {
+      currentSizeRef.current = newSize;
+      mmkv.set(STORAGE_KEY, newSize);
+      setFontSizeState(newSize);
+    }
+  }, []);
 
-      onPanResponderGrant: (e) => {
-        const dist = getTwoFingerDistance(e);
-        lastDistRef.current = dist;
-        accDeltaRef.current = 0;
-      },
+  // Native 제스처와 Pinch를 동시에 실행 → ScrollView 스크롤과 충돌 없음
+  const nativeGesture = useMemo(() => Gesture.Native(), []);
 
-      onPanResponderMove: (e) => {
-        const dist = getTwoFingerDistance(e);
-        if (dist === null || lastDistRef.current === null) return;
+  const pinchGesture = useMemo(
+    () =>
+      Gesture.Pinch()
+        .onBegin(() => {
+          'worklet';
+          runOnJS(handlePinchBegin)();
+        })
+        .onUpdate((e) => {
+          'worklet';
+          runOnJS(handlePinchUpdate)(e.scale);
+        }),
+    [handlePinchBegin, handlePinchUpdate],
+  );
 
-        const delta = dist - lastDistRef.current;
-        accDeltaRef.current += delta;
-
-        if (Math.abs(accDeltaRef.current) >= STEP_THRESHOLD) {
-          const steps = Math.floor(Math.abs(accDeltaRef.current) / STEP_THRESHOLD);
-          const direction = accDeltaRef.current > 0 ? 1 : -1;
-          setFontSize(fontSizeRef.current + steps * direction);
-          accDeltaRef.current = accDeltaRef.current % STEP_THRESHOLD;
-        }
-
-        lastDistRef.current = dist;
-      },
-
-      onPanResponderRelease: () => {
-        lastDistRef.current = null;
-        accDeltaRef.current = 0;
-      },
-
-      onPanResponderTerminate: () => {
-        lastDistRef.current = null;
-        accDeltaRef.current = 0;
-      },
-    })
-  ).current;
+  const composedGesture = useMemo(
+    () => Gesture.Simultaneous(nativeGesture, pinchGesture),
+    [nativeGesture, pinchGesture],
+  );
 
   return {
     fontSize,
-    panHandlers: panResponder.panHandlers,
-    resetFontSize: () => setFontSize(DEFAULT_SIZE),
+    pinchGesture: composedGesture,
+    resetFontSize: () => {
+      currentSizeRef.current = DEFAULT_SIZE;
+      mmkv.set(STORAGE_KEY, DEFAULT_SIZE);
+      setFontSizeState(DEFAULT_SIZE);
+    },
   };
 }

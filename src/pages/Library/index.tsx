@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppContext } from '../../hooks/useAppData';
 import { useDailyBible, buildBibleUrl, todayKSTString } from '../../hooks/useDailyBible';
 import { usePrayerFontSize } from '../../hooks/usePrayerFontSize';
@@ -151,7 +152,7 @@ export default function LibraryScreen() {
     prayers, addPrayer, updatePrayer, deletePrayer,
     toggleFavorite, todayList, setTodayList,
   } = useAppContext();
-  const { fontSize, panHandlers } = usePrayerFontSize();
+  const { fontSize, pinchGesture } = usePrayerFontSize();
 
   const [search,       setSearch]       = useState('');
   const [activeTab,    setActiveTab]    = useState<TabType>('전체');
@@ -355,6 +356,8 @@ export default function LibraryScreen() {
 
       {/* ── 상세 보기 모달 ── */}
       <Modal visible={!!detailPrayer} transparent animationType="slide" onRequestClose={() => setDetailPrayer(null)}>
+        {/* Modal은 GestureHandlerRootView 범위 밖 → 내부에 별도 선언 필요 */}
+        <GestureHandlerRootView style={{ flex: 1 }}>
         {detailPrayer && (
           <View style={dlg.bg}>
             <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setDetailPrayer(null)} />
@@ -369,19 +372,21 @@ export default function LibraryScreen() {
                   <MaterialCommunityIcons name="close" size={22} color="#999" />
                 </TouchableOpacity>
               </View>
-              {/* 두 손가락 핀치로 글씨 크기 조절 */}
-              <View {...panHandlers}>
-                <ScrollView style={[dlg.body, { maxHeight: screenHeight * 0.55 }]}>
-                  {detailPrayer.source === 'bible' ? (
-                    <View style={dlg.bibleContent}>
-                      <Text style={[dlg.content, { fontSize, lineHeight: fontSize * 1.65 }]}>오늘의 성경 본문은 홈 탭에서 확인하세요.</Text>
-                    </View>
-                  ) : (
-                    <Text style={[dlg.content, { fontSize, lineHeight: fontSize * 1.65 }]}>{detailPrayer.content}</Text>
-                  )}
-                  <View style={{ height: 20 }} />
-                </ScrollView>
-              </View>
+              {/* 두 손가락 핀치로 글씨 크기 조절 — collapsable=false 필수(Android) */}
+              <GestureDetector gesture={pinchGesture}>
+                <View collapsable={false}>
+                  <ScrollView style={[dlg.body, { maxHeight: screenHeight * 0.55 }]}>
+                    {detailPrayer.source === 'bible' ? (
+                      <View style={dlg.bibleContent}>
+                        <Text style={[dlg.content, { fontSize, lineHeight: fontSize * 1.65 }]}>오늘의 성경 본문은 홈 탭에서 확인하세요.</Text>
+                      </View>
+                    ) : (
+                      <Text style={[dlg.content, { fontSize, lineHeight: fontSize * 1.65 }]}>{detailPrayer.content}</Text>
+                    )}
+                    <View style={{ height: 20 }} />
+                  </ScrollView>
+                </View>
+              </GestureDetector>
               <View style={dlg.footer}>
                 {detailPrayer.source !== 'bible' && (
                   <TouchableOpacity style={dlg.editBtn} onPress={() => openEdit(detailPrayer)}>
@@ -395,6 +400,7 @@ export default function LibraryScreen() {
             </View>
           </View>
         )}
+        </GestureHandlerRootView>
       </Modal>
 
       {/* ── 액션 모달 (롱프레스) ── */}

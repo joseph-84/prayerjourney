@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Pressable,
   Modal, TextInput, FlatList, Alert, useWindowDimensions,
 } from 'react-native';
+import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { usePrayerFontSize } from '../../hooks/usePrayerFontSize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenWrapper from '../../components/ScreenWrapper';
@@ -45,9 +46,11 @@ function formatTime12(time: string) {
 // ── 기도문 상세 모달 ──────────────────────────────────────────────
 const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ prayer, onClose }) => {
   const { bottom } = useSafeAreaInsets();
-  const { fontSize, panHandlers } = usePrayerFontSize();
+  const { fontSize, pinchGesture } = usePrayerFontSize();
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
+      {/* Modal은 GestureHandlerRootView 범위 밖 → 내부에 별도 선언 필요 */}
+      <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={mod.bg}>
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
         <View style={[mod.sheet, { paddingBottom: Math.max(32, bottom + 16) }]}>
@@ -62,22 +65,25 @@ const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ 
             </TouchableOpacity>
           </View>
           {/* 두 손가락 핀치로 글씨 크기 조절 */}
-          <View {...panHandlers} style={{ flexShrink: 1 }}>
-            <ScrollView style={mod.body} showsVerticalScrollIndicator={false}>
-              {prayer.source === 'bible'
-                ? <BiblePrayerContent prayerId={prayer.id} fontSize={fontSize} />
-                : <Text style={[mod.content, { fontSize, lineHeight: fontSize * 1.65 }]}>
-                    {prayer.content.replace(/\\n/g, '\n')}
-                  </Text>
-              }
-              <View style={{ height: 20 }} />
-            </ScrollView>
-          </View>
+          <GestureDetector gesture={pinchGesture}>
+            <View collapsable={false} style={{ flexShrink: 1 }}>
+              <ScrollView style={mod.body} showsVerticalScrollIndicator={false}>
+                {prayer.source === 'bible'
+                  ? <BiblePrayerContent prayerId={prayer.id} fontSize={fontSize} />
+                  : <Text style={[mod.content, { fontSize, lineHeight: fontSize * 1.65 }]}>
+                      {prayer.content.replace(/\\n/g, '\n')}
+                    </Text>
+                }
+                <View style={{ height: 20 }} />
+              </ScrollView>
+            </View>
+          </GestureDetector>
           <TouchableOpacity style={mod.footerBtn} onPress={onClose}>
             <Text style={mod.footerBtnText}>닫기</Text>
           </TouchableOpacity>
         </View>
       </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 };
