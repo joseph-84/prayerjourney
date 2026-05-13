@@ -7,6 +7,7 @@ import ScreenWrapper from '../../components/ScreenWrapper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppContext } from '../../hooks/useAppData';
 import { useDailyBible, buildBibleUrl, todayKSTString } from '../../hooks/useDailyBible';
+import { usePrayerFontSize } from '../../hooks/usePrayerFontSize';
 import { StoredPrayer, TodayItem } from '../../types';
 
 const GREEN = '#2D5016';
@@ -150,6 +151,7 @@ export default function LibraryScreen() {
     prayers, addPrayer, updatePrayer, deletePrayer,
     toggleFavorite, todayList, setTodayList,
   } = useAppContext();
+  const { fontSize, panHandlers } = usePrayerFontSize();
 
   const [search,       setSearch]       = useState('');
   const [activeTab,    setActiveTab]    = useState<TabType>('전체');
@@ -367,16 +369,19 @@ export default function LibraryScreen() {
                   <MaterialCommunityIcons name="close" size={22} color="#999" />
                 </TouchableOpacity>
               </View>
-              <ScrollView style={[dlg.body, { maxHeight: screenHeight * 0.55 }]}>
-                {detailPrayer.source === 'bible' ? (
-                  <View style={dlg.bibleContent}>
-                    <Text style={dlg.content}>오늘의 성경 본문은 홈 탭에서 확인하세요.</Text>
-                  </View>
-                ) : (
-                  <Text style={dlg.content}>{detailPrayer.content}</Text>
-                )}
-                <View style={{ height: 20 }} />
-              </ScrollView>
+              {/* 두 손가락 핀치로 글씨 크기 조절 */}
+              <View {...panHandlers}>
+                <ScrollView style={[dlg.body, { maxHeight: screenHeight * 0.55 }]}>
+                  {detailPrayer.source === 'bible' ? (
+                    <View style={dlg.bibleContent}>
+                      <Text style={[dlg.content, { fontSize, lineHeight: fontSize * 1.65 }]}>오늘의 성경 본문은 홈 탭에서 확인하세요.</Text>
+                    </View>
+                  ) : (
+                    <Text style={[dlg.content, { fontSize, lineHeight: fontSize * 1.65 }]}>{detailPrayer.content}</Text>
+                  )}
+                  <View style={{ height: 20 }} />
+                </ScrollView>
+              </View>
               <View style={dlg.footer}>
                 {detailPrayer.source !== 'bible' && (
                   <TouchableOpacity style={dlg.editBtn} onPress={() => openEdit(detailPrayer)}>

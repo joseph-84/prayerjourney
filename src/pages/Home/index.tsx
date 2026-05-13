@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Pressable,
   Modal, TextInput, FlatList, Alert, useWindowDimensions,
 } from 'react-native';
+import { usePrayerFontSize } from '../../hooks/usePrayerFontSize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import TimePicker from '../../components/TimePicker';
@@ -44,6 +45,7 @@ function formatTime12(time: string) {
 // ── 기도문 상세 모달 ──────────────────────────────────────────────
 const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ prayer, onClose }) => {
   const { bottom } = useSafeAreaInsets();
+  const { fontSize, panHandlers } = usePrayerFontSize();
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
       <View style={mod.bg}>
@@ -59,13 +61,18 @@ const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ 
               <MaterialCommunityIcons name="close" size={22} color="#999" />
             </TouchableOpacity>
           </View>
-          <ScrollView style={[mod.body, { flexShrink: 1 }]} showsVerticalScrollIndicator={false}>
-            {prayer.source === 'bible'
-              ? <BiblePrayerContent prayerId={prayer.id} />
-              : <Text style={mod.content}>{prayer.content.replace(/\\n/g, '\n')}</Text>
-            }
-            <View style={{ height: 20 }} />
-          </ScrollView>
+          {/* 두 손가락 핀치로 글씨 크기 조절 */}
+          <View {...panHandlers} style={{ flexShrink: 1 }}>
+            <ScrollView style={mod.body} showsVerticalScrollIndicator={false}>
+              {prayer.source === 'bible'
+                ? <BiblePrayerContent prayerId={prayer.id} fontSize={fontSize} />
+                : <Text style={[mod.content, { fontSize, lineHeight: fontSize * 1.65 }]}>
+                    {prayer.content.replace(/\\n/g, '\n')}
+                  </Text>
+              }
+              <View style={{ height: 20 }} />
+            </ScrollView>
+          </View>
           <TouchableOpacity style={mod.footerBtn} onPress={onClose}>
             <Text style={mod.footerBtnText}>닫기</Text>
           </TouchableOpacity>

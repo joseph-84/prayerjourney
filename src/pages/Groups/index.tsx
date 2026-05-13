@@ -6,6 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { BiblePrayerContent } from '../../components/BiblePrayerContent';
+import { usePrayerFontSize } from '../../hooks/usePrayerFontSize';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppContext } from '../../hooks/useAppData';
 import { StoredPrayer, StoredGroup } from '../../types';
@@ -38,6 +39,7 @@ const PrayerPlayer: React.FC<{
 }> = ({ groupName, prayers, onClose }) => {
   const [idx,  setIdx]  = useState(0);
   const [done, setDone] = useState(false);
+  const { fontSize, panHandlers } = usePrayerFontSize();
   const total   = prayers.length;
   const current = prayers[idx];
 
@@ -68,17 +70,20 @@ const PrayerPlayer: React.FC<{
         <View style={[pl.progFill, { width: `${((idx + 1) / total) * 100}%` as any }]} />
       </View>
 
-      <ScrollView style={pl.body} contentContainerStyle={pl.bodyContent}>
-        <Text style={pl.prayerTitle}>{current?.title}</Text>
-        {current?.source === 'bible'
-          ? <BiblePrayerContent prayerId={current.id} />
-          : <Text style={pl.prayerContent}>
-              {current?.content
-                ? current.content.replace(/\\n/g, '\n')
-                : '기도문 내용이 없습니다.'}
-            </Text>
-        }
-      </ScrollView>
+      {/* 두 손가락 핀치로 글씨 크기 조절 */}
+      <View {...panHandlers} style={{ flex: 1 }}>
+        <ScrollView style={pl.body} contentContainerStyle={pl.bodyContent}>
+          <Text style={pl.prayerTitle}>{current?.title}</Text>
+          {current?.source === 'bible'
+            ? <BiblePrayerContent prayerId={current.id} fontSize={fontSize} />
+            : <Text style={[pl.prayerContent, { fontSize, lineHeight: fontSize * 1.65 }]}>
+                {current?.content
+                  ? current.content.replace(/\\n/g, '\n')
+                  : '기도문 내용이 없습니다.'}
+              </Text>
+          }
+        </ScrollView>
+      </View>
 
       <View style={pl.footer}>
         <TouchableOpacity

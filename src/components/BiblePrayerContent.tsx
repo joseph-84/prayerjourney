@@ -6,9 +6,10 @@ const GREEN = '#2D5016';
 
 interface Props {
   prayerId: string;
+  fontSize?: number;
 }
 
-export const BiblePrayerContent: React.FC<Props> = ({ prayerId }) => {
+export const BiblePrayerContent: React.FC<Props> = ({ prayerId, fontSize = 15 }) => {
   const { data, loading, error, retry } = useDailyBible();
 
   if (loading) {
@@ -51,8 +52,8 @@ export const BiblePrayerContent: React.FC<Props> = ({ prayerId }) => {
 
   return (
     <View>
-      {section.book ? <Text style={styles.book}>{section.book}</Text> : null}
-      <Text style={styles.content}>{section.content}</Text>
+      {section.book ? <Text style={[styles.book, { fontSize: fontSize - 2 }]}>{section.book}</Text> : null}
+      <Text style={[styles.content, { fontSize, lineHeight: fontSize * 1.65 }]}>{section.content}</Text>
     </View>
   );
 };
