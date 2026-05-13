@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2E5418"/>
+      <stop offset="100%" stop-color="#152C09"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="55%" r="45%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.13)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <filter id="handShadow" x="-15%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="18" flood-color="rgba(0,0,0,0.38)"/>
+    </filter>
+  </defs>
+
+  <!-- 배경 (둥근 모서리 사각형) -->
+  <rect width="1024" height="1024" rx="210" fill="url(#bgGrad)"/>
+
+  <!-- 손 뒤 은은한 빛 -->
+  <ellipse cx="512" cy="505" rx="225" ry="265" fill="url(#glowGrad)"/>
+
+  <!-- 십자가 (황금색) -->
+  <g opacity="0.88" fill="#F0CC58">
+    <rect x="505" y="142" width="14" height="74" rx="5"/>
+    <rect x="474" y="170" width="76" height="14" rx="5"/>
+  </g>
+  <!-- 십자가 빛 줄기 -->
+  <g stroke="#F0CC58" stroke-width="3" stroke-linecap="round" opacity="0.35">
+    <line x1="512" y1="136" x2="512" y2="122"/>
+    <line x1="467" y1="157" x2="455" y2="147"/>
+    <line x1="557" y1="157" x2="569" y2="147"/>
+    <line x1="467" y1="190" x2="454" y2="190"/>
+    <line x1="557" y1="190" x2="570" y2="190"/>
+  </g>
+
+  <!-- ── 기도손 실루엣 ─────────────────────────────────────────── -->
+  <g filter="url(#handShadow)">
+
+    <!-- 손 전체 (양손 합쳐진 형태, 정면) -->
+    <path fill="#FFF4E8"
+      d="M 512 285
+         C 534 285, 564 300, 579 330
+         C 594 358, 598 387, 600 417
+         C 628 442, 648 468, 650 495
+         C 648 528, 633 566, 612 597
+         C 590 628, 557 657, 523 682
+         C 519 691, 515 701, 512 703
+         C 509 701, 505 691, 501 682
+         C 467 657, 434 628, 412 597
+         C 391 566, 376 528, 374 495
+         C 376 468, 396 442, 424 417
+         C 426 387, 430 358, 445 330
+         C 460 300, 490 285, 512 285
+         Z"
+    />
+
+    <!-- 오른쪽 엄지 -->
+    <path fill="#FFF4E8"
+      d="M 648 478
+         C 666 464, 690 467, 697 484
+         C 704 501, 696 526, 677 532
+         C 658 538, 644 525, 644 510
+         Z"
+    />
+
+    <!-- 왼쪽 엄지 -->
+    <path fill="#FFF4E8"
+      d="M 376 478
+         C 358 464, 334 467, 327 484
+         C 320 501, 328 526, 347 532
+         C 366 538, 380 525, 380 510
+         Z"
+    />
+  </g>
+
+  <!-- 손가락 구분선 (은은한 음각) -->
+  <g stroke="#CBB89A" stroke-width="2.2" opacity="0.42" stroke-linecap="round" fill="none">
+    <!-- 가운데 경계 (양손이 맞닿는 선) -->
+    <line x1="512" y1="286" x2="512" y2="655"/>
+    <!-- 오른손 검지-중지 경계 -->
+    <path d="M 535 290 C 548 332, 550 384, 545 432"/>
+    <!-- 오른손 중지-약지 경계 -->
+    <path d="M 554 308 C 566 346, 566 394, 559 434"/>
+    <!-- 왼손 검지-중지 경계 (대칭) -->
+    <path d="M 489 290 C 476 332, 474 384, 479 432"/>
+    <!-- 왼손 중지-약지 경계 (대칭) -->
+    <path d="M 470 308 C 458 346, 458 394, 465 434"/>
+  </g>
+
+  <!-- 손목 밴드 (아래쪽에 구조감) -->
+  <rect x="471" y="693" width="82" height="22" rx="11" fill="#EAD8C2" opacity="0.55"/>
+</svg>
