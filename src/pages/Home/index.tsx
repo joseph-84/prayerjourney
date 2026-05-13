@@ -14,6 +14,12 @@ import { rescheduleFromStorage } from '../../utils/notifications';
 const GREEN = '#2D5016';
 const DAYS_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
 
+// 독서/복음은 prayers 배열에 없는 가상 항목
+const BIBLE_PICKER_ITEMS = [
+  { id: 'bible-reading', title: '오늘의 독서', category: '매일성경' },
+  { id: 'bible-gospel',  title: '오늘의 복음',  category: '매일성경' },
+];
+
 const CAT_COLORS: Record<string, string> = {
   '주요기도': '#4A9B6F', '묵주기도': '#E86B5E', '고해성사': '#A0522D',
   '성체성사': '#3A9BE8', '호칭기도': '#7B68EE', '여러가지기도': '#E8963A',
@@ -101,15 +107,13 @@ const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ 
               <MaterialCommunityIcons name="close" size={22} color="#999" />
             </TouchableOpacity>
           </View>
-          <View style={{ maxHeight: screenHeight * 0.55 }}>
-            <ScrollView style={mod.body} showsVerticalScrollIndicator={false}>
-              {prayer.source === 'bible'
-                ? <BiblePrayerContent prayerId={prayer.id} />
-                : <Text style={mod.content}>{prayer.content.replace(/\\n/g, '\n')}</Text>
-              }
-              <View style={{ height: 20 }} />
-            </ScrollView>
-          </View>
+          <ScrollView style={[mod.body, { flexShrink: 1 }]} showsVerticalScrollIndicator={false}>
+            {prayer.source === 'bible'
+              ? <BiblePrayerContent prayerId={prayer.id} />
+              : <Text style={mod.content}>{prayer.content.replace(/\\n/g, '\n')}</Text>
+            }
+            <View style={{ height: 20 }} />
+          </ScrollView>
           <TouchableOpacity style={mod.footerBtn} onPress={onClose}>
             <Text style={mod.footerBtnText}>닫기</Text>
           </TouchableOpacity>
@@ -140,8 +144,7 @@ const GroupPrayerListModal: React.FC<{
             </TouchableOpacity>
           </View>
           <Text style={mod.hint}>기도문을 눌러 내용을 확인하세요</Text>
-          <View style={{ maxHeight: screenHeight * 0.5 }}>
-          <ScrollView style={mod.body}>
+          <ScrollView style={[mod.body, { flexShrink: 1 }]}>
             {prayers.map((p, idx) => (
               <TouchableOpacity key={p.id} style={gpm.row} onPress={() => onSelectPrayer(p)}>
                 <Text style={gpm.num}>{idx + 1}</Text>
@@ -154,7 +157,6 @@ const GroupPrayerListModal: React.FC<{
               </TouchableOpacity>
             ))}
           </ScrollView>
-          </View>
         </View>
       </View>
     </Modal>
@@ -279,10 +281,16 @@ export default function HomeScreen() {
     rescheduleFromStorage().catch(() => {});
   };
 
-  const filteredPrayers = useMemo(() =>
-    prayers.filter(p => p.title.includes(pickerSearch) || p.category.includes(pickerSearch)),
-    [prayers, pickerSearch]
-  );
+  const filteredPrayers = useMemo(() => {
+    const keyword = pickerSearch;
+    const bibleItems = BIBLE_PICKER_ITEMS.filter(b =>
+      !keyword || b.title.includes(keyword) || b.category.includes(keyword) || '성경'.includes(keyword)
+    );
+    const prayerItems = prayers.filter(p =>
+      p.title.includes(keyword) || p.category.includes(keyword)
+    );
+    return [...bibleItems, ...prayerItems] as any[];
+  }, [prayers, pickerSearch]);
   const filteredGroups = useMemo(() =>
     groups.filter(g => g.name.includes(pickerSearch)),
     [groups, pickerSearch]
@@ -748,7 +756,7 @@ const mod = StyleSheet.create({
   bg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    paddingBottom: 32, maxHeight: '80%',
+    paddingBottom: 32, maxHeight: '88%', flexShrink: 1,
   },
   handle: {
     width: 36, height: 4, backgroundColor: '#ddd', borderRadius: 2,

@@ -514,7 +514,7 @@ const frm = StyleSheet.create({
   colorBtnActive: { borderWidth: 3, borderColor: '#fff', elevation: 2, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f4f3ef', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 8 },
   searchInput: { flex: 1, fontSize: 14, color: '#1a1a1a', padding: 0 },
-  prayerList:{ maxHeight: 200 },
+  prayerList:{ },
   pItem:     { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(0,0,0,0.05)' },
   pItemSelected: { backgroundColor: '#f0f8f0' },
   pDot:      { width: 8, height: 8, borderRadius: 4 },
