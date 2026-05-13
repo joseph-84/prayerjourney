@@ -34,3 +34,21 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
+
+# Build logs & temp
+build.log
+build2.log
+*.tgz
+
+# Android generated assets (JS bundle, built by Gradle)
+android/app/src/main/assets/
+
+# Icon generation scripts preview output
+scripts/preview/
