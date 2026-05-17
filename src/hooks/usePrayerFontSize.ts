@@ -1,7 +1,8 @@
 /**
  * usePrayerFontSize
  * 두 손가락 핀치 제스처로 기도문 글씨 크기를 조절하는 커스텀 훅
- * - Gesture.Simultaneous(Native, Pinch)로 ScrollView와 동시 동작
+ * - 두 손가락이 닿는 순간 스크롤 비활성화 → 방향 무관하게 핀치로 동작
+ * - 손가락을 떼면 스크롤 즉시 재활성화
  * - MMKV로 설정값 영구 저장
  */
 import { useState, useRef, useMemo, useCallback } from 'react';
@@ -15,10 +16,12 @@ const MIN_SIZE = 12;
 const MAX_SIZE = 28;
 
 export function usePrayerFontSize() {
-  const [fontSize, setFontSizeState] = useState<number>(() => {
+  const [fontSize,      setFontSizeState]  = useState<number>(() => {
     const saved = mmkv.getNumber(STORAGE_KEY);
     return saved ?? DEFAULT_SIZE;
   });
+  // 두 손가락이 닿으면 false → ScrollView 스크롤 차단
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   const currentSizeRef = useRef(fontSize);
   currentSizeRef.current = fontSize;
@@ -27,6 +30,11 @@ export function usePrayerFontSize() {
 
   const handlePinchBegin = useCallback(() => {
     startSizeRef.current = currentSizeRef.current;
+    setScrollEnabled(false);   // 두 손가락 인식 즉시 스크롤 차단
+  }, []);
+
+  const handlePinchEnd = useCallback(() => {
+    setScrollEnabled(true);    // 손가락 떼면 스크롤 재활성화
   }, []);
 
   const handlePinchUpdate = useCallback((scale: number) => {
@@ -41,9 +49,6 @@ export function usePrayerFontSize() {
     }
   }, []);
 
-  // Native 제스처와 Pinch를 동시에 실행 → ScrollView 스크롤과 충돌 없음
-  const nativeGesture = useMemo(() => Gesture.Native(), []);
-
   const pinchGesture = useMemo(
     () =>
       Gesture.Pinch()
@@ -54,18 +59,18 @@ export function usePrayerFontSize() {
         .onUpdate((e) => {
           'worklet';
           runOnJS(handlePinchUpdate)(e.scale);
+        })
+        .onFinalize(() => {
+          'worklet';
+          runOnJS(handlePinchEnd)();   // 성공/실패 모두 스크롤 복원
         }),
-    [handlePinchBegin, handlePinchUpdate],
-  );
-
-  const composedGesture = useMemo(
-    () => Gesture.Simultaneous(nativeGesture, pinchGesture),
-    [nativeGesture, pinchGesture],
+    [handlePinchBegin, handlePinchUpdate, handlePinchEnd],
   );
 
   return {
     fontSize,
-    pinchGesture: composedGesture,
+    scrollEnabled,
+    pinchGesture,
     resetFontSize: () => {
       currentSizeRef.current = DEFAULT_SIZE;
       mmkv.set(STORAGE_KEY, DEFAULT_SIZE);

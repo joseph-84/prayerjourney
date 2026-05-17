@@ -40,7 +40,7 @@ const PrayerPlayer: React.FC<{
 }> = ({ groupName, prayers, onClose }) => {
   const [idx,  setIdx]  = useState(0);
   const [done, setDone] = useState(false);
-  const { fontSize, pinchGesture } = usePrayerFontSize();
+  const { fontSize, pinchGesture, scrollEnabled } = usePrayerFontSize();
   const total   = prayers.length;
   const current = prayers[idx];
 
@@ -74,7 +74,7 @@ const PrayerPlayer: React.FC<{
       {/* 두 손가락 핀치로 글씨 크기 조절 — collapsable=false 필수(Android) */}
       <GestureDetector gesture={pinchGesture}>
         <View collapsable={false} style={{ flex: 1 }}>
-          <ScrollView style={pl.body} contentContainerStyle={pl.bodyContent}>
+          <ScrollView style={pl.body} contentContainerStyle={pl.bodyContent} scrollEnabled={scrollEnabled}>
             <Text style={pl.prayerTitle}>{current?.title}</Text>
             {current?.source === 'bible'
               ? <BiblePrayerContent prayerId={current.id} fontSize={fontSize} />

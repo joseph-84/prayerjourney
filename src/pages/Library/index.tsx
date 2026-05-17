@@ -152,7 +152,7 @@ export default function LibraryScreen() {
     prayers, addPrayer, updatePrayer, deletePrayer,
     toggleFavorite, todayList, setTodayList,
   } = useAppContext();
-  const { fontSize, pinchGesture } = usePrayerFontSize();
+  const { fontSize, pinchGesture, scrollEnabled } = usePrayerFontSize();
 
   const [search,       setSearch]       = useState('');
   const [activeTab,    setActiveTab]    = useState<TabType>('전체');
@@ -375,8 +375,8 @@ export default function LibraryScreen() {
               {/* 두 손가락 핀치로 글씨 크기 조절 — collapsable=false 필수(Android) */}
               <GestureDetector gesture={pinchGesture}>
                 <View collapsable={false}>
-                  {/* GHScrollView: GestureDetector 안에서 스크롤과 핀치가 충돌 없이 동작 */}
-                  <GHScrollView style={[dlg.body, { maxHeight: screenHeight * 0.55 }]}>
+                  {/* GHScrollView: scrollEnabled로 손가락 수에 따라 스크롤/핀치 전환 */}
+                  <GHScrollView style={[dlg.body, { maxHeight: screenHeight * 0.55 }]} scrollEnabled={scrollEnabled}>
                     {detailPrayer.source === 'bible' ? (
                       <View style={dlg.bibleContent}>
                         <Text style={[dlg.content, { fontSize, lineHeight: fontSize * 1.65 }]}>오늘의 성경 본문은 홈 탭에서 확인하세요.</Text>

@@ -46,7 +46,7 @@ function formatTime12(time: string) {
 // ── 기도문 상세 모달 ──────────────────────────────────────────────
 const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ prayer, onClose }) => {
   const { bottom } = useSafeAreaInsets();
-  const { fontSize, pinchGesture } = usePrayerFontSize();
+  const { fontSize, pinchGesture, scrollEnabled } = usePrayerFontSize();
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
       {/* Modal은 GestureHandlerRootView 범위 밖 → 내부에 별도 선언 필요 */}
@@ -67,8 +67,8 @@ const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ 
           {/* 두 손가락 핀치로 글씨 크기 조절 */}
           <GestureDetector gesture={pinchGesture}>
             <View collapsable={false} style={{ flexShrink: 1 }}>
-              {/* GHScrollView: GestureDetector 안에서 스크롤과 핀치가 충돌 없이 동작 */}
-              <GHScrollView style={mod.body} showsVerticalScrollIndicator={false}>
+              {/* GHScrollView: scrollEnabled로 손가락 수에 따라 스크롤/핀치 전환 */}
+              <GHScrollView style={mod.body} showsVerticalScrollIndicator={false} scrollEnabled={scrollEnabled}>
                 {prayer.source === 'bible'
                   ? <BiblePrayerContent prayerId={prayer.id} fontSize={fontSize} />
                   : <Text style={[mod.content, { fontSize, lineHeight: fontSize * 1.65 }]}>
