@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Pressable,
   Modal, TextInput, FlatList, Alert, useWindowDimensions,
 } from 'react-native';
-import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureDetector, GestureHandlerRootView, ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import { usePrayerFontSize } from '../../hooks/usePrayerFontSize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenWrapper from '../../components/ScreenWrapper';
@@ -67,7 +67,8 @@ const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ 
           {/* 두 손가락 핀치로 글씨 크기 조절 */}
           <GestureDetector gesture={pinchGesture}>
             <View collapsable={false} style={{ flexShrink: 1 }}>
-              <ScrollView style={mod.body} showsVerticalScrollIndicator={false}>
+              {/* GHScrollView: GestureDetector 안에서 스크롤과 핀치가 충돌 없이 동작 */}
+              <GHScrollView style={mod.body} showsVerticalScrollIndicator={false}>
                 {prayer.source === 'bible'
                   ? <BiblePrayerContent prayerId={prayer.id} fontSize={fontSize} />
                   : <Text style={[mod.content, { fontSize, lineHeight: fontSize * 1.65 }]}>
@@ -75,7 +76,7 @@ const PrayerModal: React.FC<{ prayer: StoredPrayer; onClose: () => void }> = ({ 
                     </Text>
                 }
                 <View style={{ height: 20 }} />
-              </ScrollView>
+              </GHScrollView>
             </View>
           </GestureDetector>
           <TouchableOpacity style={mod.footerBtn} onPress={onClose}>

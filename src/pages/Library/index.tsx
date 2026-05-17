@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureDetector, GestureHandlerRootView, ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import { useAppContext } from '../../hooks/useAppData';
 import { useDailyBible, buildBibleUrl, todayKSTString } from '../../hooks/useDailyBible';
 import { usePrayerFontSize } from '../../hooks/usePrayerFontSize';
@@ -375,7 +375,8 @@ export default function LibraryScreen() {
               {/* 두 손가락 핀치로 글씨 크기 조절 — collapsable=false 필수(Android) */}
               <GestureDetector gesture={pinchGesture}>
                 <View collapsable={false}>
-                  <ScrollView style={[dlg.body, { maxHeight: screenHeight * 0.55 }]}>
+                  {/* GHScrollView: GestureDetector 안에서 스크롤과 핀치가 충돌 없이 동작 */}
+                  <GHScrollView style={[dlg.body, { maxHeight: screenHeight * 0.55 }]}>
                     {detailPrayer.source === 'bible' ? (
                       <View style={dlg.bibleContent}>
                         <Text style={[dlg.content, { fontSize, lineHeight: fontSize * 1.65 }]}>오늘의 성경 본문은 홈 탭에서 확인하세요.</Text>
@@ -384,7 +385,7 @@ export default function LibraryScreen() {
                       <Text style={[dlg.content, { fontSize, lineHeight: fontSize * 1.65 }]}>{detailPrayer.content}</Text>
                     )}
                     <View style={{ height: 20 }} />
-                  </ScrollView>
+                  </GHScrollView>
                 </View>
               </GestureDetector>
               <View style={dlg.footer}>
