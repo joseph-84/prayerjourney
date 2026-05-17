@@ -5,7 +5,7 @@ import notifee, {
   TriggerType,
   type TimestampTrigger,
 } from '@notifee/react-native';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { TodayItem, StoredPrayer, StoredGroup } from '../types';
 import { mmkv, getPrayers, getGroups, getTodayList } from './storage';
 
@@ -261,6 +261,32 @@ export async function snoozeAlarm(
 export async function getScheduledAlarmCount(): Promise<number> {
   const scheduled = await notifee.getTriggerNotifications();
   return scheduled.length;
+}
+
+// ── 배터리 최적화 관련 ────────────────────────────────────────────
+/** 배터리 최적화가 켜져 있으면 true (Android 전용) */
+export async function isBatteryOptimizationEnabled(): Promise<boolean> {
+  try {
+    if (Platform.OS !== 'android') return false;
+    return await notifee.isBatteryOptimizationEnabled();
+  } catch { return false; }
+}
+
+/** 시스템 배터리 최적화 설정 화면 열기 */
+export async function openBatterySettings(): Promise<void> {
+  try {
+    await notifee.openBatteryOptimizationSettings();
+  } catch { /* 일부 구버전 Android에서 미지원 */ }
+}
+
+/**
+ * OEM 전원 관리 설정 열기 (삼성·샤오미·화웨이 등)
+ * 지원 기기에서만 동작하며, 미지원 기기에서는 무시됨
+ */
+export async function openPowerManagerSettings(): Promise<void> {
+  try {
+    await notifee.openPowerManagerSettings();
+  } catch { /* 미지원 기기 무시 */ }
 }
 
 // ── 저장된 데이터 기반으로 알람 재스케줄 (Home 저장 후 호출용) ─────

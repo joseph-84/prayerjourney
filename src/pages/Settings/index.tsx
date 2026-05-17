@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   Switch, Alert, Modal, TextInput, Share, ActivityIndicator,
@@ -16,6 +16,9 @@ import {
   requestExactAlarmPermission,
   scheduleAlarms,
   cancelAllAlarms,
+  isBatteryOptimizationEnabled,
+  openBatterySettings,
+  openPowerManagerSettings,
 } from '../../utils/notifications';
 import { N8N_BASE_URL } from '../../config';
 
@@ -32,10 +35,11 @@ export default function SettingsScreen() {
 
   // 알림 설정 – MMKV 에서 초기값 로드
   const initNotif = loadNotifSettings();
-  const [notifEnabled, setNotifEnabled] = useState(initNotif.enabled);
-  const [notifSound,   setNotifSound]   = useState(initNotif.sound);
-  const [notifVibrate, setNotifVibrate] = useState(initNotif.vibrate);
-  const [toast,        setToast]        = useState('');
+  const [notifEnabled,  setNotifEnabled]  = useState(initNotif.enabled);
+  const [notifSound,    setNotifSound]    = useState(initNotif.sound);
+  const [notifVibrate,  setNotifVibrate]  = useState(initNotif.vibrate);
+  const [batteryOptOn,  setBatteryOptOn]  = useState(false);   // 배터리 최적화 활성 여부
+  const [toast,         setToast]         = useState('');
 
   // 서버 내보내기 모달
   const [exportModal,   setExportModal]   = useState(false);
@@ -50,6 +54,11 @@ export default function SettingsScreen() {
   const [pasteHint,     setPasteHint]     = useState('');
 
   const toast$ = (msg: string) => showToastMsg(setToast, msg);
+
+  // ── 화면 진입 시 배터리 최적화 상태 확인 ───────────────────────────
+  useEffect(() => {
+    isBatteryOptimizationEnabled().then(setBatteryOptOn).catch(() => {});
+  }, []);
 
   // ── 알림 토글 핸들러 ─────────────────────────────────────────────
   const handleNotifEnabled = async (val: boolean) => {
@@ -283,6 +292,32 @@ export default function SettingsScreen() {
 
         {/* 알림 */}
         <Text style={styles.sectionLabel}>알림</Text>
+
+        {/* 배터리 최적화 경고 */}
+        {notifEnabled && batteryOptOn && (
+          <View style={styles.batteryWarning}>
+            <Text style={styles.batteryWarningTitle}>⚠️ 배터리 최적화 해제 필요</Text>
+            <Text style={styles.batteryWarningDesc}>
+              배터리 최적화가 켜져 있으면 2~3일 후 알람이 자동으로 꺼질 수 있습니다.
+              아래 버튼을 눌러 이 앱을 배터리 최적화에서 제외해 주세요.
+            </Text>
+            <View style={styles.batteryBtnRow}>
+              <TouchableOpacity
+                style={styles.batteryBtn}
+                onPress={() => openBatterySettings().then(() => isBatteryOptimizationEnabled().then(setBatteryOptOn))}
+              >
+                <Text style={styles.batteryBtnText}>배터리 최적화 설정</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.batteryBtn, { marginLeft: 8, backgroundColor: '#E8F5E9' }]}
+                onPress={() => openPowerManagerSettings()}
+              >
+                <Text style={[styles.batteryBtnText, { color: GREEN }]}>절전 모드 설정</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         <View style={styles.group}>
           <View style={styles.row}>
             <View style={[styles.rowIcon, { backgroundColor: '#FFF3E0' }]}>
@@ -559,6 +594,30 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   toastText: { color: '#fff', fontSize: 13 },
+
+  // 배터리 최적화 경고 카드
+  batteryWarning: {
+    marginHorizontal: 16, marginBottom: 10,
+    backgroundColor: '#FFF8E1',
+    borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: '#FFE082',
+  },
+  batteryWarningTitle: {
+    fontSize: 14, fontWeight: '700', color: '#E65100', marginBottom: 6,
+  },
+  batteryWarningDesc: {
+    fontSize: 12, color: '#6D4C41', lineHeight: 18, marginBottom: 12,
+  },
+  batteryBtnRow: { flexDirection: 'row' },
+  batteryBtn: {
+    flex: 1, backgroundColor: '#FFF3E0',
+    borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12,
+    alignItems: 'center',
+    borderWidth: 1, borderColor: '#FFE082',
+  },
+  batteryBtnText: {
+    fontSize: 12, fontWeight: '600', color: '#E65100',
+  },
 });
 
 const dlg = StyleSheet.create({
