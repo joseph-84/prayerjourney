@@ -52,9 +52,11 @@ export function usePrayerFontSize() {
   const pinchGesture = useMemo(
     () =>
       Gesture.Pinch()
-        .onBegin(() => {
+        // onBegin: 손가락 1개도 발생 → 사용 금지
+        // onStart: 두 손가락이 인식돼 제스처가 실제로 활성화될 때만 발생
+        .onStart(() => {
           'worklet';
-          runOnJS(handlePinchBegin)();
+          runOnJS(handlePinchBegin)();   // startSize 저장 + scrollEnabled=false
         })
         .onUpdate((e) => {
           'worklet';
@@ -62,7 +64,7 @@ export function usePrayerFontSize() {
         })
         .onFinalize(() => {
           'worklet';
-          runOnJS(handlePinchEnd)();   // 성공/실패 모두 스크롤 복원
+          runOnJS(handlePinchEnd)();     // 성공/실패 모두 scrollEnabled=true 복원
         }),
     [handlePinchBegin, handlePinchUpdate, handlePinchEnd],
   );
